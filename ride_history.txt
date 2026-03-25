@@ -1,0 +1,56 @@
+===== RIDE HISTORY — 24-Mar-2026 14:53 =====
+
+BookingID   : BK1001
+Route       : MG Road → Airport
+Distance    : 13.3 km
+Vehicle     : SEDAN
+Fare        : ₹249.50
+Status      : COMPLETED
+Payment     : UPI
+Paid        : true
+-------------------------------------------
+BookingID   : BK1002
+Route       : Koregaon Park → Viman Nagar
+Distance    : 19.0 km
+Vehicle     : BIKE
+Fare        : ₹172.00
+Status      : COMPLETED
+Payment     : WALLET
+Paid        : true
+-------------------------------------------
+BookingID   : BK1003
+Route       : Pune Station → Lonavala
+Distance    : 6.6 km
+Vehicle     : SUV
+Fare        : ₹212.00
+Status      : COMPLETED
+Payment     : PENDING
+Paid        : false
+-------------------------------------------
+BookingID   : BK1004
+Route       : Hinjawadi → Baner
+Distance    : 9.4 km
+Vehicle     : AUTO
+Fare        : ₹214.20  [SURGE x1.5]
+Status      : COMPLETED
+Payment     : CARD
+Paid        : true
+-------------------------------------------
+BookingID   : BK1005
+Route       : Wakad → Pimpri
+Distance    : 17.4 km
+Vehicle     : SEDAN
+Fare        : ₹311.00
+Status      : CANCELLED
+Payment     : PENDING
+Paid        : false
+-------------------------------------------
+BookingID   : BK1006
+Route       : Camp → Kothrud
+Distance    : 9.7 km
+Vehicle     : SEDAN
+Fare        : ₹195.50
+Status      : DRIVER_ASSIGNED
+Payment     : PENDING
+Paid        : false
+-------------------------------------------
