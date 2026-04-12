@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RideX — Cab Booking System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #ffffff0f;
+    --border-bright: #ffffff1a;
+    --accent: #7c6ef5;
+    --accent2: #f5c26e;
+    --accent3: #5ee8b0;
+    --danger: #f05c5c;
+    --text: #f0f0f8;
+    --muted: #6e6e8a;
+    --muted2: #3a3a52;
+    --bike: #5ee8b0;
+    --auto: #f5c26e;
+    --sedan: #7c6ef5;
+    --suv: #f07c5c;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND GRID ── */
+  body::before {
+    content:'';
+    position:fixed; inset:0; z-index:0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events:none;
+  }
+
+  /* ── GLOW ORBS ── */
+  .orb {
+    position:fixed; border-radius:50%; filter:blur(80px); pointer-events:none; z-index:0;
+  }
+  .orb1 { width:480px; height:480px; background:rgba(124,110,245,0.12); top:-100px; left:-100px; }
+  .orb2 { width:360px; height:360px; background:rgba(94,232,176,0.08); bottom:50px; right:-100px; }
+
+  /* ── LAYOUT ── */
+  #app { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:24px; }
+
+  /* ── HEADER ── */
+  header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-icon {
+    width:40px; height:40px; border-radius:10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; font-weight:800; font-family:var(--font-display);
+    color:#fff;
+  }
+  .logo-text { font-family:var(--font-display); font-size:22px; font-weight:800; letter-spacing:-0.5px; }
+  .logo-sub { font-size:11px; color:var(--muted); font-family:var(--font-mono); letter-spacing:1px; }
+
+  .header-badges { display:flex; gap:8px; flex-wrap:wrap; }
+  .badge {
+    padding:4px 10px; border-radius:20px; font-size:11px; font-family:var(--font-mono);
+    border:1px solid var(--border-bright); color:var(--muted);
+    transition: all 0.2s;
+  }
+  .badge.active { border-color:var(--accent); color:var(--accent); background:rgba(124,110,245,0.08); }
+
+  /* ── MAIN GRID ── */
+  .main-grid {
+    display:grid;
+    grid-template-columns: 1fr 1fr 360px;
+    gap:20px;
+    align-items:start;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color:var(--border-bright); }
+  .card-title {
+    font-family:var(--font-display); font-size:13px; font-weight:600;
+    letter-spacing:1.5px; text-transform:uppercase; color:var(--muted);
+    margin-bottom:16px; display:flex; align-items:center; gap:8px;
+  }
+  .card-title span { font-size:16px; }
+
+  /* ── BOOKING FORM ── */
+  .form-row { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  label { font-size:12px; color:var(--muted); font-family:var(--font-mono); }
+  input, select {
+    background:var(--surface); border:1px solid var(--border-bright);
+    border-radius:10px; padding:10px 14px; color:var(--text);
+    font-family:var(--font-body); font-size:14px; outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
+    width:100%;
+  }
+  input:focus, select:focus {
+    border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,110,245,0.15);
+  }
+  select option { background:var(--surface); }
+
+  /* ── VEHICLE TYPE SELECTOR ── */
+  .vehicle-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .v-btn {
+    background:var(--surface); border:1.5px solid var(--border-bright);
+    border-radius:10px; padding:10px; cursor:pointer; text-align:center;
+    transition:all 0.2s; color:var(--muted); font-family:var(--font-mono);
+    font-size:12px;
+  }
+  .v-btn .icon { font-size:20px; display:block; margin-bottom:4px; }
+  .v-btn .fare-hint { font-size:10px; color:var(--muted2); margin-top:2px; }
+  .v-btn.selected { border-color:var(--accent); color:var(--text); background:rgba(124,110,245,0.12); }
+  .v-btn[data-type="BIKE"].selected { border-color:var(--bike); background:rgba(94,232,176,0.08); color:var(--bike); }
+  .v-btn[data-type="AUTO"].selected { border-color:var(--auto); background:rgba(245,194,110,0.08); color:var(--auto); }
+  .v-btn[data-type="SEDAN"].selected { border-color:var(--sedan); background:rgba(124,110,245,0.08); color:var(--sedan); }
+  .v-btn[data-type="SUV"].selected { border-color:var(--suv); background:rgba(240,124,92,0.08); color:var(--suv); }
+
+  /* ── PAYMENT PILLS ── */
+  .pay-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .pay-btn {
+    background:var(--surface); border:1.5px solid var(--border-bright);
+    border-radius:8px; padding:8px 4px; cursor:pointer; text-align:center;
+    font-size:11px; font-family:var(--font-mono); color:var(--muted);
+    transition:all 0.2s;
+  }
+  .pay-btn.selected { border-color:var(--accent3); color:var(--accent3); background:rgba(94,232,176,0.08); }
+  .pay-btn .pay-icon { font-size:16px; display:block; margin-bottom:2px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    width:100%; padding:12px; border-radius:10px; border:none; cursor:pointer;
+    font-family:var(--font-display); font-size:14px; font-weight:700;
+    letter-spacing:0.5px; transition:all 0.2s; margin-top:6px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #9b8ef8);
+    color:#fff; box-shadow:0 4px 20px rgba(124,110,245,0.3);
+  }
+  .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 28px rgba(124,110,245,0.45); }
+  .btn-primary:active { transform:translateY(0); }
+  .btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .btn-danger {
+    background:rgba(240,92,92,0.12); color:var(--danger);
+    border:1.5px solid rgba(240,92,92,0.25);
+  }
+  .btn-danger:hover { background:rgba(240,92,92,0.2); }
+
+  /* ── SURGE TOGGLE ── */
+  .surge-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; background:var(--surface); border-radius:10px;
+    border:1px solid var(--border); margin-bottom:14px;
+  }
+  .surge-label { font-size:13px; }
+  .surge-label small { display:block; font-size:11px; color:var(--muted); font-family:var(--font-mono); }
+  .toggle {
+    position:relative; width:40px; height:22px;
+    background:var(--muted2); border-radius:11px; cursor:pointer;
+    transition:background 0.3s; border:none; outline:none; flex-shrink:0;
+  }
+  .toggle::after {
+    content:''; position:absolute; top:3px; left:3px;
+    width:16px; height:16px; border-radius:50%; background:#fff;
+    transition:transform 0.3s;
+  }
+  .toggle.on { background:var(--accent2); }
+  .toggle.on::after { transform:translateX(18px); }
+
+  /* ── WALLET CARD ── */
+  .wallet-display {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border:1px solid rgba(124,110,245,0.3);
+    border-radius:12px; padding:16px; margin-bottom:14px;
+    position:relative; overflow:hidden;
+  }
+  .wallet-display::before {
+    content:'◈'; position:absolute; right:12px; top:8px;
+    font-size:48px; opacity:0.04; color:var(--accent);
+  }
+  .wallet-name { font-size:11px; color:var(--muted); font-family:var(--font-mono); margin-bottom:4px; }
+  .wallet-bal { font-family:var(--font-display); font-size:28px; font-weight:700; color:var(--accent3); }
+  .wallet-bal span { font-size:14px; color:var(--muted); }
+  .wallet-rider { font-size:12px; color:var(--muted); margin-top:4px; }
+
+  /* ── ACTIVE RIDES ── */
+  .ride-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:14px; margin-bottom:10px;
+    transition:all 0.3s; animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+  .ride-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+  .booking-id { font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+  .status-pill {
+    padding:3px 10px; border-radius:20px; font-size:10px;
+    font-family:var(--font-mono); font-weight:500;
+  }
+  .status-REQUESTED { background:rgba(245,194,110,0.15); color:var(--auto); border:1px solid rgba(245,194,110,0.3); }
+  .status-DRIVER_ASSIGNED { background:rgba(124,110,245,0.15); color:var(--accent); border:1px solid rgba(124,110,245,0.3); }
+  .status-IN_PROGRESS { background:rgba(94,232,176,0.15); color:var(--accent3); border:1px solid rgba(94,232,176,0.3); }
+  .status-COMPLETED { background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid var(--border); }
+  .status-CANCELLED { background:rgba(240,92,92,0.15); color:var(--danger); border:1px solid rgba(240,92,92,0.3); }
+
+  .ride-route { display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px; }
+  .route-from, .route-to { font-weight:500; }
+  .route-arrow { color:var(--muted); font-size:12px; }
+
+  .ride-meta { display:flex; gap:12px; flex-wrap:wrap; }
+  .meta-chip {
+    font-size:11px; font-family:var(--font-mono); color:var(--muted);
+    background:var(--bg); padding:3px 8px; border-radius:6px;
+    border:1px solid var(--border);
+  }
+  .meta-chip.fare { color:var(--accent3); border-color:rgba(94,232,176,0.2); }
+  .meta-chip.surge { color:var(--auto); border-color:rgba(245,194,110,0.2); }
+  .meta-chip.driver { color:var(--accent); border-color:rgba(124,110,245,0.2); }
+
+  .ride-actions { display:flex; gap:8px; margin-top:10px; }
+  .action-btn {
+    flex:1; padding:7px; border-radius:8px; border:1px solid var(--border);
+    background:transparent; color:var(--muted); cursor:pointer;
+    font-size:11px; font-family:var(--font-mono); transition:all 0.2s;
+  }
+  .action-btn:hover { border-color:var(--border-bright); color:var(--text); }
+  .action-btn.progress { border-color:rgba(94,232,176,0.3); color:var(--accent3); }
+  .action-btn.progress:hover { background:rgba(94,232,176,0.1); }
+  .action-btn.complete { border-color:rgba(124,110,245,0.3); color:var(--accent); }
+  .action-btn.complete:hover { background:rgba(124,110,245,0.1); }
+  .action-btn.pay-btn-small { border-color:rgba(245,194,110,0.3); color:var(--auto); }
+  .action-btn.pay-btn-small:hover { background:rgba(245,194,110,0.1); }
+  .action-btn.cancel-btn { border-color:rgba(240,92,92,0.3); color:var(--danger); }
+  .action-btn.cancel-btn:hover { background:rgba(240,92,92,0.1); }
+
+  /* ── LOG PANEL ── */
+  .log-panel {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:14px; height:360px;
+    overflow-y:auto; font-family:var(--font-mono); font-size:12px;
+  }
+  .log-panel::-webkit-scrollbar { width:4px; }
+  .log-panel::-webkit-scrollbar-track { background:transparent; }
+  .log-panel::-webkit-scrollbar-thumb { background:var(--muted2); border-radius:2px; }
+
+  .log-entry { padding:5px 0; border-bottom:1px solid var(--border); line-height:1.5; }
+  .log-entry:last-child { border:none; }
+  .log-time { color:var(--muted2); margin-right:6px; }
+  .log-info { color:var(--accent3); }
+  .log-warn { color:var(--auto); }
+  .log-error { color:var(--danger); }
+  .log-success { color:var(--accent3); }
+  .log-notify { color:var(--accent); }
+  .log-pay { color:#f5a623; }
+
+  /* ── DRIVERS GRID ── */
+  .driver-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .driver-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:10px; transition:all 0.3s;
+  }
+  .driver-card.busy { opacity:0.5; }
+  .driver-name { font-size:13px; font-weight:500; margin-bottom:2px; }
+  .driver-info { font-size:11px; color:var(--muted); font-family:var(--font-mono); }
+  .driver-type-dot {
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    margin-right:5px;
+  }
+  .dot-BIKE { background:var(--bike); }
+  .dot-AUTO { background:var(--auto); }
+  .dot-SEDAN { background:var(--sedan); }
+  .dot-SUV { background:var(--suv); }
+  .driver-status {
+    font-size:10px; font-family:var(--font-mono); margin-top:4px;
+    padding:2px 7px; border-radius:10px; display:inline-block;
+  }
+  .driver-status.avail { background:rgba(94,232,176,0.1); color:var(--accent3); }
+  .driver-status.busy { background:rgba(240,92,92,0.1); color:var(--danger); }
+
+  /* ── FARE TABLE ── */
+  .fare-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .fare-table tr { border-bottom:1px solid var(--border); }
+  .fare-table tr:last-child { border:none; }
+  .fare-table td { padding:8px 4px; }
+  .fare-table td:last-child { text-align:right; font-family:var(--font-mono); color:var(--accent3); }
+  .surge-note { font-size:10px; color:var(--auto); font-family:var(--font-mono); margin-top:8px; }
+
+  /* ── EXCEPTION BANNER ── */
+  .exc-banner {
+    background:rgba(240,92,92,0.08); border:1px solid rgba(240,92,92,0.25);
+    border-radius:10px; padding:12px 14px; margin-bottom:14px;
+    font-size:12px; font-family:var(--font-mono); color:var(--danger);
+    animation:shake 0.3s ease;
+    display:none;
+  }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}
+  }
+  .exc-banner.show { display:block; }
+  .exc-type { font-size:10px; opacity:0.7; margin-bottom:2px; }
+
+  /* ── OOP BADGES ── */
+  .oop-strip {
+    display:flex; gap:6px; flex-wrap:wrap;
+    padding:14px; background:var(--surface);
+    border-radius:12px; border:1px solid var(--border); margin-bottom:20px;
+  }
+  .oop-badge {
+    padding:4px 10px; border-radius:6px; font-size:10px;
+    font-family:var(--font-mono); border:1px solid var(--border-bright);
+    color:var(--muted); transition:all 0.3s;
+  }
+  .oop-badge.lit { color:var(--text); border-color:var(--accent); background:rgba(124,110,245,0.12); }
+
+  /* ── INVOICE MODAL ── */
+  .modal-backdrop {
+    position:fixed; inset:0; background:rgba(0,0,0,0.8);
+    z-index:100; display:none; align-items:center; justify-content:center;
+    backdrop-filter:blur(4px);
+  }
+  .modal-backdrop.open { display:flex; }
+  .invoice {
+    background:var(--card); border:1px solid var(--border-bright);
+    border-radius:20px; padding:28px; min-width:320px; max-width:400px;
+    width:90%; animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+  .invoice-title { font-family:var(--font-display); font-size:20px; font-weight:800; margin-bottom:20px; }
+  .invoice-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .invoice-row:last-of-type { border:none; }
+  .invoice-row.total { font-weight:700; font-size:15px; color:var(--accent3); border-top:1px solid var(--border); margin-top:4px; }
+  .invoice-row.surge { color:var(--auto); }
+  .invoice-val { font-family:var(--font-mono); }
+  .close-invoice {
+    width:100%; margin-top:16px; padding:12px; border-radius:10px;
+    background:var(--accent); border:none; color:#fff; cursor:pointer;
+    font-family:var(--font-display); font-size:14px; font-weight:700;
+    transition:opacity 0.2s;
+  }
+  .close-invoice:hover { opacity:0.85; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { text-align:center; padding:32px 16px; color:var(--muted); }
+  .empty-state .empty-icon { font-size:40px; opacity:0.3; margin-bottom:8px; }
+  .empty-state p { font-size:13px; }
+
+  /* ── RIDER SELECTOR ── */
+  .rider-tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .rider-tab {
+    flex:1; padding:8px; border-radius:8px; background:var(--surface);
+    border:1.5px solid var(--border); cursor:pointer; text-align:center;
+    font-size:12px; font-family:var(--font-mono); color:var(--muted);
+    transition:all 0.2s;
+  }
+  .rider-tab.active { border-color:var(--accent); color:var(--accent); background:rgba(124,110,245,0.1); }
+  .rider-tab .rider-balance { font-size:10px; color:var(--accent3); margin-top:2px; }
+
+  /* ── STATS ROW ── */
+  .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+  .stat-box {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:14px; text-align:center;
+  }
+  .stat-num { font-family:var(--font-display); font-size:24px; font-weight:800; }
+  .stat-label { font-size:11px; color:var(--muted); font-family:var(--font-mono); margin-top:2px; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:900px){
+    .main-grid { grid-template-columns:1fr; }
+    .stats-row { grid-template-columns:repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">R</div>
+      <div>
+        <div class="logo-text">RideX</div>
+        <div class="logo-sub">OOP DEMO · Java · Cab Booking System</div>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge active">Singleton</span>
+      <span class="badge active">Strategy</span>
+      <span class="badge active">Builder</span>
+      <span class="badge active">Observer</span>
+      <span class="badge active">Decorator</span>
+      <span class="badge active">Generics</span>
+    </div>
+  </header>
+
+  <!-- OOP STRIP -->
+  <div class="oop-strip" id="oopStrip">
+    <span class="oop-badge" id="oop-singleton">Singleton</span>
+    <span class="oop-badge" id="oop-inheritance">Inheritance</span>
+    <span class="oop-badge" id="oop-polymorphism">Polymorphism</span>
+    <span class="oop-badge" id="oop-abstract">Abstract Class</span>
+    <span class="oop-badge" id="oop-interface">Interfaces (5x)</span>
+    <span class="oop-badge" id="oop-encapsulation">Encapsulation</span>
+    <span class="oop-badge" id="oop-generics">Generics</span>
+    <span class="oop-badge" id="oop-collections">Collections</span>
+    <span class="oop-badge" id="oop-exceptions">Custom Exceptions</span>
+    <span class="oop-badge" id="oop-strategy">Strategy Pattern</span>
+    <span class="oop-badge" id="oop-observer">Observer Pattern</span>
+    <span class="oop-badge" id="oop-builder">Builder Pattern</span>
+    <span class="oop-badge" id="oop-decorator">Decorator Pattern</span>
+    <span class="oop-badge" id="oop-wallet">Wallet Feature</span>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num" id="stat-bookings">0</div>
+      <div class="stat-label">Total Bookings</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-completed" style="color:var(--accent3)">0</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-revenue" style="color:var(--auto)">₹0</div>
+      <div class="stat-label">Revenue</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="stat-cancelled" style="color:var(--danger)">0</div>
+      <div class="stat-label">Cancelled</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT: BOOKING FORM -->
+    <div>
+      <div class="card">
+        <div class="card-title"><span>🚗</span>Book a Ride</div>
+
+        <!-- Rider Selector -->
+        <div class="form-row">
+          <label>SELECT RIDER</label>
+          <div class="rider-tabs">
+            <div class="rider-tab active" id="tab-R001" onclick="selectRider('R001')">
+              Pranav Sharma
+              <div class="rider-balance" id="bal-R001">₹500.00</div>
+            </div>
+            <div class="rider-tab" id="tab-R002" onclick="selectRider('R002')">
+              Aisha Mehta
+              <div class="rider-balance" id="bal-R002">₹200.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exception Banner -->
+        <div class="exc-banner" id="excBanner">
+          <div class="exc-type" id="excType">EXCEPTION</div>
+          <div id="excMsg">Error message</div>
+        </div>
+
+        <!-- Pickup & Drop -->
+        <div class="form-row">
+          <label>PICKUP LOCATION</label>
+          <input type="text" id="pickup" placeholder="e.g. MG Road" list="locs"/>
+        </div>
+        <div class="form-row">
+          <label>DROP LOCATION</label>
+          <input type="text" id="drop" placeholder="e.g. Airport" list="locs"/>
+        </div>
+        <datalist id="locs">
+          <option value="MG Road"/><option value="Airport"/><option value="Koregaon Park"/>
+          <option value="Viman Nagar"/><option value="Pune Station"/><option value="Lonavala"/>
+          <option value="Hinjawadi"/><option value="Baner"/><option value="Wakad"/>
+          <option value="Kothrud"/><option value="Camp"/><option value="FC Road"/>
+        </datalist>
+
+        <!-- Vehicle Type -->
+        <div class="form-row">
+          <label>VEHICLE TYPE · Strategy Pattern</label>
+          <div class="vehicle-grid">
+            <div class="v-btn" data-type="BIKE" onclick="selectVehicle('BIKE')">
+              <span class="icon">🏍</span>Bike
+              <div class="fare-hint" id="fare-BIKE">₹20 + ₹8/km</div>
+            </div>
+            <div class="v-btn" data-type="AUTO" onclick="selectVehicle('AUTO')">
+              <span class="icon">🛺</span>Auto
+              <div class="fare-hint" id="fare-AUTO">₹30 + ₹12/km</div>
+            </div>
+            <div class="v-btn selected" data-type="SEDAN" onclick="selectVehicle('SEDAN')">
+              <span class="icon">🚗</span>Sedan
+              <div class="fare-hint" id="fare-SEDAN">₹50 + ₹15/km</div>
+            </div>
+            <div class="v-btn" data-type="SUV" onclick="selectVehicle('SUV')">
+              <span class="icon">🚙</span>SUV
+              <div class="fare-hint" id="fare-SUV">₹80 + ₹20/km</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Surge Toggle -->
+        <div class="surge-row">
+          <div class="surge-label">
+            Surge Pricing <small>Decorator Pattern · ×1.5 multiplier</small>
+          </div>
+          <button class="toggle" id="surgeToggle" onclick="toggleSurge()"></button>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="form-row">
+          <label>PAYMENT METHOD</label>
+          <div class="pay-grid">
+            <div class="pay-btn" data-pay="UPI" onclick="selectPay('UPI')">
+              <span class="pay-icon">📱</span>UPI
+            </div>
+            <div class="pay-btn selected" data-pay="CASH" onclick="selectPay('CASH')">
+              <span class="pay-icon">💵</span>Cash
+            </div>
+            <div class="pay-btn" data-pay="CARD" onclick="selectPay('CARD')">
+              <span class="pay-icon">💳</span>Card
+            </div>
+            <div class="pay-btn" data-pay="WALLET" onclick="selectPay('WALLET')">
+              <span class="pay-icon">👛</span>Wallet
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="bookBtn" onclick="bookRide()">Book Now</button>
+      </div>
+
+      <!-- Fare Estimator -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-title"><span>💡</span>Fare Estimator · 10 km</div>
+        <table class="fare-table" id="fareTable">
+          <tr><td>🏍 Bike</td><td>₹100.00</td></tr>
+          <tr><td>🛺 Auto</td><td>₹150.00</td></tr>
+          <tr><td>🚗 Sedan</td><td>₹200.00</td></tr>
+          <tr><td>🚙 SUV</td><td>₹280.00</td></tr>
+        </table>
+        <div class="surge-note" id="surgeNote" style="display:none">⚡ Surge ×1.5 active — all fares multiplied</div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: ACTIVE RIDES + DRIVERS -->
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span>📍</span>Active Rides</div>
+        <div id="activeRides">
+          <div class="empty-state">
+            <div class="empty-icon">🚕</div>
+            <p>No rides yet. Book one above!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>👤</span>Drivers · Polymorphism</div>
+        <div class="driver-grid" id="driversGrid"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: LOG + WALLET -->
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title"><span>👛</span>Wallet · Encapsulation</div>
+
+        <div class="wallet-display">
+          <div class="wallet-name">RIDER BALANCE</div>
+          <div class="wallet-bal">₹<span id="walletBal">500.00</span></div>
+          <div class="wallet-rider" id="walletRider">Pranav Sharma</div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <input type="number" id="rechargeAmt" placeholder="Amount" min="1" style="flex:1"/>
+          <button class="btn btn-primary" style="width:auto;padding:10px 16px;margin:0" onclick="rechargeWallet()">Recharge</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>📋</span>Console Log · File I/O</div>
+        <div class="log-panel" id="logPanel">
+          <div class="log-entry"><span class="log-time">[init]</span><span class="log-info">CabBookingEngine.getInstance() — Singleton created</span></div>
+          <div class="log-entry"><span class="log-time">[init]</span><span class="log-info">Registered drivers: Rajesh (Sedan), Suresh (Bike), Manoj (Auto), Vikram (SUV)</span></div>
+          <div class="log-entry"><span class="log-time">[init]</span><span class="log-info">Registered riders: Pranav Sharma ₹500, Aisha Mehta ₹200</span></div>
+          <div class="log-entry"><span class="log-time">[init]</span><span class="log-success">System ready — RideHistory&lt;Booking&gt; initialised (Generics)</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- INVOICE MODAL -->
+<div class="modal-backdrop" id="invoiceModal">
+  <div class="invoice">
+    <div class="invoice-title">📄 Invoice</div>
+    <div id="invoiceContent"></div>
+    <button class="close-invoice" onclick="closeInvoice()">Close</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  JAVA OOP ENGINE — JS SIMULATION
+// ══════════════════════════════════════════
+
+// Enums
+const VehicleType = { BIKE:'BIKE', AUTO:'AUTO', SEDAN:'SEDAN', SUV:'SUV' };
+const RideStatus = { REQUESTED:'REQUESTED', DRIVER_ASSIGNED:'DRIVER_ASSIGNED', IN_PROGRESS:'IN_PROGRESS', COMPLETED:'COMPLETED', CANCELLED:'CANCELLED' };
+const PaymentMethod = { UPI:'UPI', CASH:'CASH', CARD:'CARD', WALLET:'WALLET' };
+
+// ── Custom Exceptions ──
+class InvalidLocationException extends Error { constructor(m){super(m);this.name='InvalidLocationException';} }
+class NoDriverAvailableException extends Error { constructor(m){super(m);this.name='NoDriverAvailableException';} }
+class BookingNotFoundException extends Error { constructor(m){super(m);this.name='BookingNotFoundException';} }
+class RideAlreadyCancelledException extends Error { constructor(m){super(m);this.name='RideAlreadyCancelledException';} }
+class InsufficientWalletBalanceException extends Error { constructor(m){super(m);this.name='InsufficientWalletBalanceException';} }
+
+// ── Wallet (Encapsulation) ──
+class Wallet {
+  #balance;
+  constructor(init){ this.#balance = init; }
+  recharge(amt){ if(amt<=0) throw new Error('Invalid amount'); this.#balance+=amt; }
+  deduct(amt){ if(amt>this.#balance) throw new InsufficientWalletBalanceException(`Insufficient balance. Need ₹${amt.toFixed(2)}, have ₹${this.#balance.toFixed(2)}`); this.#balance-=amt; }
+  getBalance(){ return this.#balance; }
+}
+
+// ── Abstract User (Abstract Class + Polymorphism) ──
+class User {
+  constructor(id, name, phone, email){ this.userId=id; this.name=name; this.phone=phone; this.email=email; }
+  getRole(){ throw new Error('Abstract'); }
+  toString(){ return `${this.getRole()}[${this.userId}] ${this.name}`; }
+}
+
+// ── Rider (Inheritance + Observer) ──
+class Rider extends User {
+  constructor(id, name, phone, email, bal){
+    super(id,name,phone,email);
+    this.wallet = new Wallet(bal);
+    this.bookingHistory = [];
+  }
+  getRole(){ return 'RIDER'; }
+  onRideUpdate(bookingId, status, msg){ log(`SMS → ${this.name}: ${bookingId} | ${status} — ${msg}`, 'notify'); }
+  addBooking(id){ this.bookingHistory.push(id); }
+}
+
+// ── Driver (Inheritance + Observer) ──
+class Driver extends User {
+  constructor(id, name, phone, email, vtype, vnum){
+    super(id,name,phone,email);
+    this.vehicleType=vtype; this.vehicleNumber=vnum;
+    this.available=true; this.rating=4.5; this.totalRides=0;
+  }
+  getRole(){ return 'DRIVER'; }
+  onRideUpdate(bookingId, status, msg){ log(`App  → ${this.name}: ${bookingId} | ${status} — ${msg}`, 'notify'); }
+}
+
+// ── Fare Strategies (Strategy Pattern) ──
+class BikeFareStrategy  { calculateFare(km){ return 20+(km*8); }  getName(){ return 'Bike'; } }
+class AutoFareStrategy  { calculateFare(km){ return 30+(km*12); } getName(){ return 'Auto'; } }
+class SedanFareStrategy { calculateFare(km){ return 50+(km*15); } getName(){ return 'Sedan'; } }
+class SUVFareStrategy   { calculateFare(km){ return 80+(km*20); } getName(){ return 'SUV'; } }
+
+// ── Surge Pricing Decorator (Decorator Pattern) ──
+class SurgePricingDecorator {
+  constructor(wrapped, mult){ this.wrapped=wrapped; this.mult=mult; }
+  calculateFare(km){ return this.wrapped.calculateFare(km)*this.mult; }
+  getName(){ return this.wrapped.getName()+` (Surge ×${this.mult})`; }
+}
+
+// ── Booking.Builder (Builder Pattern) ──
+class Booking {
+  constructor(b){
+    this.bookingId=b.bookingId; this.riderId=b.riderId; this.driverId=b.driverId;
+    this.pickup=b.pickup; this.drop=b.drop; this.distanceKm=b.distanceKm;
+    this.fare=b.fare; this.vehicleType=b.vehicleType; this.bookingTime=new Date();
+    this.status=RideStatus.REQUESTED; this.paymentMethod=null; this.isPaid=false;
+    this.isSurge=b.isSurge||false; this.surgeMultiplier=b.surgeMultiplier||1.0;
+    this.driverName=b.driverName;
+  }
+  static Builder = class {
+    constructor(id, rid, did){ this.bookingId=id; this.riderId=rid; this.driverId=did; }
+    pickup(p){ this.pickup=p; return this; }
+    drop(d){ this.drop=d; return this; }
+    distanceKm(k){ this.distanceKm=k; return this; }
+    fare(f){ this.fare=f; return this; }
+    vehicleType(v){ this.vehicleType=v; return this; }
+    surge(s,m){ this.isSurge=s; this.surgeMultiplier=m; return this; }
+    driverName(n){ this.driverName=n; return this; }
+    build(){ return new Booking(this); }
+  }
+}
+
+// ── RideHistory<T> (Generics + Collections) ──
+class RideHistory {
+  constructor(){ this.bookings=[]; }
+  add(b){ this.bookings.push(b); }
+  getByRider(rid){ return this.bookings.filter(b=>b.riderId===rid); }
+  getAll(){ return this.bookings; }
+}
+
+// ══════════════════════════════════════════
+//  ENGINE (Singleton)
+// ══════════════════════════════════════════
+class CabBookingEngine {
+  static #instance = null;
+  constructor(){
+    this.drivers = {};
+    this.riders  = {};
+    this.activeBookings = {};
+    this.rideHistory = new RideHistory();
+    this.bookingCounter = 1000;
+    this.surgeActive = false;
+    this.surgeMultiplier = 1.5;
+    this.fareStrategies = {
+      BIKE: new BikeFareStrategy(),
+      AUTO: new AutoFareStrategy(),
+      SEDAN: new SedanFareStrategy(),
+      SUV: new SUVFareStrategy()
+    };
+  }
+  static getInstance(){
+    if(!CabBookingEngine.#instance) CabBookingEngine.#instance = new CabBookingEngine();
+    return CabBookingEngine.#instance;
+  }
+  registerDriver(d){ this.drivers[d.userId]=d; }
+  registerRider(r){ this.riders[r.userId]=r; }
+
+  getStrategy(type){
+    let s = this.fareStrategies[type];
+    if(this.surgeActive) s = new SurgePricingDecorator(s, this.surgeMultiplier);
+    return s;
+  }
+
+  book(pickup, drop, vtype, riderId){
+    // Validation (InvalidLocationException)
+    if(!pickup||!pickup.trim()) throw new InvalidLocationException('Pickup location cannot be empty.');
+    if(!drop||!drop.trim()) throw new InvalidLocationException('Drop location cannot be empty.');
+    if(pickup.trim().toLowerCase()===drop.trim().toLowerCase()) throw new InvalidLocationException('Pickup and drop cannot be the same location.');
+
+    // Find available driver (NoDriverAvailableException)
+    const driver = Object.values(this.drivers).find(d=>d.vehicleType===vtype && d.available);
+    if(!driver) throw new NoDriverAvailableException(`No ${vtype} driver available. Try a different vehicle type.`);
+
+    const rider = this.riders[riderId];
+    const strategy = this.getStrategy(vtype);
+    const dist = Math.round((5+Math.random()*15)*10)/10;
+    const fare = Math.round(strategy.calculateFare(dist)*100)/100;
+    const bookingId = 'BK'+( ++this.bookingCounter);
+
+    // Builder Pattern
+    const booking = new Booking.Builder(bookingId, riderId, driver.userId)
+      .pickup(pickup.trim()).drop(drop.trim()).distanceKm(dist).fare(fare)
+      .vehicleType(vtype).surge(this.surgeActive, this.surgeMultiplier)
+      .driverName(driver.name).build();
+
+    driver.available = false;
+    this.activeBookings[bookingId] = booking;
+    this.rideHistory.add(booking);
+    rider.addBooking(bookingId);
+
+    // Observer
+    rider.onRideUpdate(bookingId, RideStatus.DRIVER_ASSIGNED, `Driver ${driver.name} is on the way! (${driver.vehicleNumber})`);
+    driver.onRideUpdate(bookingId, RideStatus.DRIVER_ASSIGNED, `New ride: ${pickup} → ${drop} | ₹${fare.toFixed(2)}`);
+    booking.status = RideStatus.DRIVER_ASSIGNED;
+
+    log(`[Booking] ${bookingId} | ${pickup} → ${drop} | ${dist}km | ₹${fare.toFixed(2)}${this.surgeActive?' [SURGE ×1.5]':''} | Driver: ${driver.name}`, 'info');
+    if(this.surgeActive) litOop('decorator');
+    litOop('builder'); litOop('strategy'); litOop('observer');
+    return bookingId;
+  }
+
+  updateStatus(bookingId, status){
+    const b = this.activeBookings[bookingId];
+    if(!b) throw new BookingNotFoundException(`Booking ${bookingId} not found.`);
+    b.status = status;
+    const rider = this.riders[b.riderId];
+    const driver = this.drivers[b.driverId];
+    const msg = status===RideStatus.IN_PROGRESS ? 'Ride started! Enjoy the trip.'
+              : status===RideStatus.COMPLETED   ? `Ride completed! Fare ₹${b.fare.toFixed(2)}`
+              : 'Status updated.';
+    if(rider)  rider.onRideUpdate(bookingId, status, msg);
+    if(driver) driver.onRideUpdate(bookingId, status, `Ride ${bookingId} → ${status}`);
+    if(status===RideStatus.COMPLETED){ if(driver){ driver.available=true; driver.totalRides++; } }
+    log(`[Status] ${bookingId} → ${status}`, 'info');
+    litOop('observer');
+  }
+
+  cancel(bookingId){
+    const b = this.activeBookings[bookingId];
+    if(!b) throw new BookingNotFoundException(`Booking ${bookingId} not found.`);
+    if(b.status===RideStatus.CANCELLED) throw new RideAlreadyCancelledException(`Booking ${bookingId} already cancelled.`);
+    if(b.status===RideStatus.COMPLETED) throw new RideAlreadyCancelledException(`Cannot cancel a completed ride.`);
+    b.status = RideStatus.CANCELLED;
+    const driver = this.drivers[b.driverId];
+    if(driver) driver.available = true;
+    const rider = this.riders[b.riderId];
+    if(rider) rider.onRideUpdate(bookingId, RideStatus.CANCELLED, 'Your ride has been cancelled.');
+    log(`[Cancel] ${bookingId} cancelled. Driver freed.`, 'warn');
+    litOop('exceptions');
+  }
+
+  processPayment(bookingId, method){
+    const b = this.activeBookings[bookingId];
+    if(!b) throw new BookingNotFoundException('Booking not found.');
+    if(b.isPaid){ log(`[Payment] ${bookingId} already paid.`,'warn'); return; }
+    if(method===PaymentMethod.WALLET){
+      const rider = this.riders[b.riderId];
+      rider.wallet.deduct(b.fare); // may throw InsufficientWalletBalanceException
+      log(`[Wallet] Deducted ₹${b.fare.toFixed(2)} | New balance ₹${rider.wallet.getBalance().toFixed(2)}`,'pay');
+      litOop('wallet'); litOop('encapsulation');
+    }
+    b.paymentMethod = method;
+    b.isPaid = true;
+    log(`[Payment] ${bookingId} paid via ${method} | ₹${b.fare.toFixed(2)}`,'pay');
+    litOop('exceptions');
+  }
+
+  generateInvoice(bookingId){
+    const b = this.activeBookings[bookingId];
+    if(!b) throw new BookingNotFoundException('Booking not found.');
+    const base = b.fare/(b.isSurge?b.surgeMultiplier:1);
+    const surgePremium = b.fare - base;
+    const tax = b.fare*0.05;
+    const platform = 10;
+    const total = b.fare+tax+platform;
+    return { b, base, surgePremium, tax, platform, total };
+  }
+}
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const engine = CabBookingEngine.getInstance();
+let selectedRider = 'R001';
+let selectedVehicle = 'SEDAN';
+let selectedPay = 'CASH';
+let surgeActive = false;
+
+// Init data
+const r1 = new Rider('R001','Pranav Sharma','8765432100','pranav@mail.com',500);
+const r2 = new Rider('R002','Aisha Mehta','8765432101','aisha@mail.com',200);
+engine.registerRider(r1);
+engine.registerRider(r2);
+
+const drivers = [
+  new Driver('D001','Rajesh Kumar','9876543210','rajesh@cab.com','SEDAN','MH12-AB-1234'),
+  new Driver('D002','Suresh Yadav','9876543211','suresh@cab.com','BIKE','MH12-CD-5678'),
+  new Driver('D003','Manoj Patil','9876543212','manoj@cab.com','AUTO','MH12-EF-9012'),
+  new Driver('D004','Vikram Singh','9876543213','vikram@cab.com','SUV','MH12-GH-3456'),
+];
+drivers.forEach(d=>engine.registerDriver(d));
+
+// Stats
+let stats = { total:0, completed:0, cancelled:0, revenue:0 };
+
+// ══════════════════════════════════════════
+//  UI FUNCTIONS
+// ══════════════════════════════════════════
+
+function log(msg, type='info'){
+  const panel = document.getElementById('logPanel');
+  const t = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const el = document.createElement('div');
+  el.className='log-entry';
+  el.innerHTML=`<span class="log-time">[${t}]</span><span class="log-${type}">${msg}</span>`;
+  panel.appendChild(el);
+  panel.scrollTop=panel.scrollHeight;
+}
+
+function litOop(id){
+  const el = document.getElementById('oop-'+id);
+  if(!el) return;
+  el.classList.add('lit');
+  setTimeout(()=>el.classList.remove('lit'),2000);
+}
+
+function showException(name, msg){
+  const b = document.getElementById('excBanner');
+  document.getElementById('excType').textContent = name;
+  document.getElementById('excMsg').textContent = msg;
+  b.classList.add('show');
+  litOop('exceptions');
+  log(`[${name}] ${msg}`, 'error');
+  setTimeout(()=>b.classList.remove('show'),4000);
+}
+
+function selectRider(id){
+  selectedRider = id;
+  document.querySelectorAll('.rider-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  updateWalletDisplay();
+  litOop('inheritance'); litOop('encapsulation');
+}
+
+function selectVehicle(type){
+  selectedVehicle = type;
+  document.querySelectorAll('.v-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelector(`.v-btn[data-type="${type}"]`).classList.add('selected');
+  litOop('strategy');
+}
+
+function selectPay(method){
+  selectedPay = method;
+  document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelector(`.pay-btn[data-pay="${method}"]`).classList.add('selected');
+}
+
+function toggleSurge(){
+  surgeActive = !surgeActive;
+  engine.surgeActive = surgeActive;
+  const toggle = document.getElementById('surgeToggle');
+  toggle.classList.toggle('on', surgeActive);
+  document.getElementById('surgeNote').style.display = surgeActive?'block':'none';
+  updateFareTable();
+  log(surgeActive?'[Surge] SurgePricingDecorator ENABLED ×1.5':'[Surge] SurgePricingDecorator DISABLED', surgeActive?'warn':'info');
+  litOop('decorator');
+}
+
+function updateFareTable(){
+  const dist = 10;
+  const types = [{t:'BIKE',i:'🏍'},{t:'AUTO',i:'🛺'},{t:'SEDAN',i:'🚗'},{t:'SUV',i:'🚙'}];
+  const rows = types.map(({t,i})=>{
+    let s = engine.fareStrategies[t];
+    if(surgeActive) s = new SurgePricingDecorator(s,1.5);
+    const f = s.calculateFare(dist);
+    return `<tr><td>${i} ${t.charAt(0)+t.slice(1).toLowerCase()}</td><td>₹${f.toFixed(2)}</td></tr>`;
+  }).join('');
+  document.getElementById('fareTable').innerHTML = rows;
+}
+
+function updateWalletDisplay(){
+  const rider = engine.riders[selectedRider];
+  document.getElementById('walletBal').textContent = rider.wallet.getBalance().toFixed(2);
+  document.getElementById('walletRider').textContent = rider.name;
+  document.getElementById('bal-R001').textContent = '₹'+engine.riders['R001'].wallet.getBalance().toFixed(2);
+  document.getElementById('bal-R002').textContent = '₹'+engine.riders['R002'].wallet.getBalance().toFixed(2);
+}
+
+function rechargeWallet(){
+  const amt = parseFloat(document.getElementById('rechargeAmt').value);
+  if(!amt||amt<=0){ showException('IllegalArgumentException','Recharge amount must be > 0'); return; }
+  engine.riders[selectedRider].wallet.recharge(amt);
+  updateWalletDisplay();
+  log(`[Wallet] ${engine.riders[selectedRider].name} recharged ₹${amt.toFixed(2)}`, 'pay');
+  document.getElementById('rechargeAmt').value='';
+  litOop('wallet'); litOop('encapsulation');
+}
+
+function renderDrivers(){
+  const grid = document.getElementById('driversGrid');
+  grid.innerHTML = Object.values(engine.drivers).map(d=>`
+    <div class="driver-card ${d.available?'':'busy'}">
+      <div class="driver-name">
+        <span class="driver-type-dot dot-${d.vehicleType}"></span>${d.name}
+      </div>
+      <div class="driver-info">${d.vehicleNumber} · ${d.vehicleType}</div>
+      <div class="driver-info">Rating: ${d.rating} · Rides: ${d.totalRides}</div>
+      <span class="driver-status ${d.available?'avail':'busy'}">${d.available?'Available':'On Ride'}</span>
+    </div>
+  `).join('');
+  litOop('polymorphism'); litOop('abstract');
+}
+
+function renderActiveRides(){
+  const container = document.getElementById('activeRides');
+  const active = Object.values(engine.activeBookings).filter(b=>b.status!==RideStatus.COMPLETED&&b.status!==RideStatus.CANCELLED);
+  const all = Object.values(engine.activeBookings);
+
+  if(all.length===0){
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">🚕</div><p>No rides yet. Book one above!</p></div>';
+    return;
+  }
+
+  container.innerHTML = all.slice().reverse().map(b=>{
+    const canProgress = b.status===RideStatus.DRIVER_ASSIGNED;
+    const canComplete = b.status===RideStatus.IN_PROGRESS;
+    const canPay = b.status===RideStatus.COMPLETED && !b.isPaid;
+    const canCancel = b.status!==RideStatus.COMPLETED && b.status!==RideStatus.CANCELLED;
+
+    return `
+    <div class="ride-card" id="ridecard-${b.bookingId}">
+      <div class="ride-header">
+        <span class="booking-id">${b.bookingId}</span>
+        <span class="status-pill status-${b.status}">${b.status.replace('_',' ')}</span>
+      </div>
+      <div class="ride-route">
+        <span class="route-from">${b.pickup}</span>
+        <span class="route-arrow">→</span>
+        <span class="route-to">${b.drop}</span>
+      </div>
+      <div class="ride-meta">
+        <span class="meta-chip fare">₹${b.fare.toFixed(2)}</span>
+        <span class="meta-chip">${b.distanceKm}km</span>
+        <span class="meta-chip">${b.vehicleType}</span>
+        <span class="meta-chip driver">${b.driverName}</span>
+        ${b.isSurge?`<span class="meta-chip surge">SURGE ×1.5</span>`:''}
+        ${b.isPaid?`<span class="meta-chip" style="color:var(--accent3)">PAID·${b.paymentMethod}</span>`:''}
+      </div>
+      <div class="ride-actions">
+        ${canProgress?`<button class="action-btn progress" onclick="doProgress('${b.bookingId}')">▶ In Progress</button>`:''}
+        ${canComplete?`<button class="action-btn complete" onclick="doComplete('${b.bookingId}')">✔ Complete</button>`:''}
+        ${canPay?`<button class="action-btn pay-btn-small" onclick="doPayAndInvoice('${b.bookingId}')">💳 Pay & Invoice</button>`:''}
+        ${b.isPaid?`<button class="action-btn complete" onclick="doInvoice('${b.bookingId}')">🧾 Invoice</button>`:''}
+        ${canCancel?`<button class="action-btn cancel-btn" onclick="doCancel('${b.bookingId}')">✕ Cancel</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStats(){
+  document.getElementById('stat-bookings').textContent = stats.total;
+  document.getElementById('stat-completed').textContent = stats.completed;
+  document.getElementById('stat-revenue').textContent = '₹'+Math.round(stats.revenue);
+  document.getElementById('stat-cancelled').textContent = stats.cancelled;
+}
+
+// ── ACTIONS ──
+function bookRide(){
+  const pickup = document.getElementById('pickup').value;
+  const drop   = document.getElementById('drop').value;
+  try {
+    const id = engine.book(pickup, drop, selectedVehicle, selectedRider);
+    stats.total++;
+    renderActiveRides();
+    renderDrivers();
+    renderStats();
+    litOop('singleton'); litOop('collections'); litOop('generics'); litOop('interface');
+  } catch(e){
+    showException(e.name||'Exception', e.message);
+  }
+}
+
+function doProgress(id){
+  try {
+    engine.updateStatus(id, RideStatus.IN_PROGRESS);
+    renderActiveRides(); renderDrivers();
+  } catch(e){ showException(e.name, e.message); }
+}
+
+function doComplete(id){
+  try {
+    engine.updateStatus(id, RideStatus.COMPLETED);
+    stats.completed++;
+    renderActiveRides(); renderDrivers(); renderStats();
+  } catch(e){ showException(e.name, e.message); }
+}
+
+function doCancel(id){
+  try {
+    engine.cancel(id);
+    stats.cancelled++;
+    renderActiveRides(); renderDrivers(); renderStats();
+  } catch(e){ showException(e.name, e.message); }
+}
+
+function doPayAndInvoice(id){
+  try {
+    engine.processPayment(id, selectedPay);
+    const data = engine.generateInvoice(id);
+    stats.revenue += data.b.fare;
+    renderActiveRides(); updateWalletDisplay(); renderStats();
+    showInvoice(data);
+  } catch(e){ showException(e.name, e.message); }
+}
+
+function doInvoice(id){
+  try {
+    const data = engine.generateInvoice(id);
+    showInvoice(data);
+  } catch(e){ showException(e.name, e.message); }
+}
+
+function showInvoice(data){
+  const { b, base, surgePremium, tax, platform, total } = data;
+  document.getElementById('invoiceContent').innerHTML = `
+    <div class="invoice-row"><span>Booking ID</span><span class="invoice-val">${b.bookingId}</span></div>
+    <div class="invoice-row"><span>Route</span><span class="invoice-val">${b.pickup} → ${b.drop}</span></div>
+    <div class="invoice-row"><span>Distance</span><span class="invoice-val">${b.distanceKm} km</span></div>
+    <div class="invoice-row"><span>Vehicle</span><span class="invoice-val">${b.vehicleType}</span></div>
+    <div class="invoice-row"><span>Base Fare</span><span class="invoice-val">₹${base.toFixed(2)}</span></div>
+    ${b.isSurge?`<div class="invoice-row surge"><span>Surge Premium (×1.5)</span><span class="invoice-val">₹${surgePremium.toFixed(2)}</span></div>`:''}
+    <div class="invoice-row"><span>Tax (5%)</span><span class="invoice-val">₹${tax.toFixed(2)}</span></div>
+    <div class="invoice-row"><span>Platform Fee</span><span class="invoice-val">₹${platform.toFixed(2)}</span></div>
+    <div class="invoice-row total"><span>TOTAL</span><span class="invoice-val">₹${total.toFixed(2)}</span></div>
+    <div class="invoice-row"><span>Payment</span><span class="invoice-val">${b.paymentMethod||'PENDING'}</span></div>
+  `;
+  document.getElementById('invoiceModal').classList.add('open');
+}
+
+function closeInvoice(){
+  document.getElementById('invoiceModal').classList.remove('open');
+}
+
+// ── INIT ──
+renderDrivers();
+renderStats();
+updateFareTable();
+litOop('singleton');
+
+log('[Singleton] CabBookingEngine is the one and only instance.', 'info');
+log('[Generics]  RideHistory<Booking> and BookingQueue<Booking> initialized.', 'success');
+log('[Inheritance] Rider, Driver both extend abstract User class.', 'info');
+</script>
+</body>
+</html>
